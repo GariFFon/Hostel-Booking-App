@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/auth/application/session.dart';
 import '../features/auth/data/auth_repository.dart';
+import '../features/auth/data/google_signer.dart';
 import '../features/bookings/data/booking_repository.dart';
 import '../features/host/data/host_repository.dart';
 import '../features/hostels/data/hostel_repository.dart';
@@ -13,6 +14,11 @@ import '../features/wishlist/data/wishlist_repository.dart';
 import 'config/env.dart';
 import 'network/api_client.dart';
 import 'network/token_store.dart';
+import '../features/tenancy/data/tenancy_repository.dart';
+import '../features/rent/data/rent_repository.dart';
+import '../features/complaints/data/complaint_repository.dart';
+import 'util/launcher.dart';
+import 'util/photo_picker.dart';
 
 /// Riverpod 3 retries a failed provider up to 10 times with back-off (about 40 s) before the error reaches the UI.
 /// Here every error state already has an instant "Try again" (and pull-to-refresh), so failures surface at once.
@@ -33,6 +39,11 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   );
 });
 
+final googleSignerProvider = Provider<GoogleSigner>((ref) {
+  final env = ref.watch(envProvider);
+  return PlatformGoogleSigner(serverClientId: env.googleServerClientId, iosClientId: env.googleIosClientId);
+});
+
 final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository(ref.watch(apiClientProvider), ref.watch(tokenStoreProvider)));
 final hostelRepositoryProvider = Provider<HostelRepository>((ref) => HostelRepository(ref.watch(apiClientProvider)));
 final bookingRepositoryProvider = Provider<BookingRepository>((ref) => BookingRepository(ref.watch(apiClientProvider)));
@@ -40,6 +51,15 @@ final reviewRepositoryProvider = Provider<ReviewRepository>((ref) => ReviewRepos
 final wishlistRepositoryProvider = Provider<WishlistRepository>((ref) => WishlistRepository(ref.watch(apiClientProvider)));
 final notificationRepositoryProvider = Provider<NotificationRepository>((ref) => NotificationRepository(ref.watch(apiClientProvider)));
 final hostRepositoryProvider = Provider<HostRepository>((ref) => HostRepository(ref.watch(apiClientProvider)));
+final tenancyRepositoryProvider = Provider<TenancyRepository>((ref) => TenancyRepository(ref.watch(apiClientProvider)));
+
+/// Opens a link outside the app. A provider so tests can see what would have been opened instead of launching it.
+final urlOpenerProvider = Provider<Future<bool> Function(String url)>((ref) => openExternalUrl);
+
+/// Where complaint photos come from (gallery or camera). A provider so tests can supply photos without a device.
+final photoPickerProvider = Provider<PhotoPicker>((ref) => DevicePhotoPicker());
+final complaintRepositoryProvider = Provider<ComplaintRepository>((ref) => ComplaintRepository(ref.watch(apiClientProvider)));
+final rentRepositoryProvider = Provider<RentRepository>((ref) => RentRepository(ref.watch(apiClientProvider)));
 
 /// Light / dark / follow the system. Stored in plain preferences (not sensitive).
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);

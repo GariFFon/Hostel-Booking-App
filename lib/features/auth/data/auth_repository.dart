@@ -19,17 +19,23 @@ class AuthRepository {
       _storeSession(await _api.post('/auth/login', body: {'email': email.trim(), 'password': password}, auth: false));
 
   Future<AppUser> register({required String fullName, required String email, required String password, String? phone, bool asOwner = false}) async =>
-      _storeSession(await _api.post(
-        '/auth/register',
-        body: {
-          'fullName': fullName.trim(),
-          'email': email.trim(),
-          'password': password,
-          if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
-          if (asOwner) 'role': 'OWNER',
-        },
-        auth: false,
-      ));
+      _storeSession(
+        await _api.post(
+          '/auth/register',
+          body: {
+            'fullName': fullName.trim(),
+            'email': email.trim(),
+            'password': password,
+            if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+            if (asOwner) 'role': 'OWNER',
+          },
+          auth: false,
+        ),
+      );
+
+  /// Exchanges a Google ID token for a session (creates the account on first use, links it when the email already exists).
+  Future<AppUser> google({required String idToken, bool asOwner = false}) async =>
+      _storeSession(await _api.post('/auth/google', body: {'idToken': idToken, if (asOwner) 'role': 'OWNER'}, auth: false));
 
   Future<AppUser> me() => _api.getOne('/me', AppUser.fromJson);
 
@@ -54,10 +60,8 @@ class AuthRepository {
 
   Future<void> verifyEmail(String token) => _api.post('/auth/verify-email', body: {'token': token.trim()}, auth: false);
 
-  Future<AppUser> updateProfile({String? fullName, String? phone}) async => AppUser.fromJson(asMap((await _api.patch('/me', body: {
-        'fullName': ?fullName,
-        'phone': ?phone,
-      })).data));
+  Future<AppUser> updateProfile({String? fullName, String? phone}) async =>
+      AppUser.fromJson(asMap((await _api.patch('/me', body: {'fullName': ?fullName, 'phone': ?phone})).data));
 
   /// Signs out other devices and hands back a fresh session for this one.
   Future<AppUser> changePassword({required String currentPassword, required String newPassword}) async =>
@@ -69,7 +73,4 @@ class AuthRepository {
     await _api.refreshSession();
     return me();
   }
-
-  Future<void> registerDevice({required String platform, required String pushToken}) =>
-      _api.post('/me/devices', body: {'platform': platform, 'pushToken': pushToken});
 }

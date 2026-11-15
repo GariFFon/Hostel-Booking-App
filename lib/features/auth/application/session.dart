@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
+import '../../notifications/application/push_registration.dart';
 import '../domain/app_user.dart';
 
 /// Who is signed in. `AsyncData(null)` is "signed out"; an error means the stored session could not be checked (usually offline).
@@ -33,12 +34,19 @@ class SessionController extends AsyncNotifier<AppUser?> {
     state = AsyncData(user);
   }
 
+  /// Signs in with a Google ID token already obtained from the platform.
+  Future<void> signInWithGoogle(String idToken) async {
+    final user = await ref.read(authRepositoryProvider).google(idToken: idToken);
+    state = AsyncData(user);
+  }
+
   Future<void> signUp({required String fullName, required String email, required String password, String? phone}) async {
     final user = await ref.read(authRepositoryProvider).register(fullName: fullName, email: email, password: password, phone: phone);
     state = AsyncData(user);
   }
 
   Future<void> signOut() async {
+    await ref.read(pushRegistrationProvider).forget(); // while the session still works
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncData(null);
   }

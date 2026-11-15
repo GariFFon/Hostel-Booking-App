@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "429260420672",
+    "project_id": "hostel-booking-e6e16",
+    "storage_bucket": "hostel-booking-e6e16.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429260420672:android:1a0d6e25d6fe0ca33ad1a5",
+        "android_client_info": {
+          "package_name": "com.hostelbooking.hostel_booking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0R7t2ZU4g-6HtmuYaf5zFi3luFxjJncA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429260420672:android:a071689efdc3bfe63ad1a5",
+        "android_client_info": {
+          "package_name": "com.hostelbooking.hostel_booking_app.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0R7t2ZU4g-6HtmuYaf5zFi3luFxjJncA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

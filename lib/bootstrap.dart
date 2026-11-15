@@ -11,6 +11,8 @@ import 'app.dart';
 import 'core/config/env.dart';
 import 'core/network/token_store.dart';
 import 'core/providers.dart';
+import 'features/notifications/application/push_registration.dart';
+import 'features/notifications/data/push_service.dart';
 
 /// Shared start-up for every flavour. Never logs request bodies, tokens or personal data.
 ///
@@ -41,10 +43,17 @@ Future<void> bootstrap(Env env) async {
         // A crash-reporting hook would go here; intentionally nothing is sent today.
       };
 
+      final push = await FirebasePushService.create(); // inert (no push) when Firebase is not configured on this build
+
       runApp(
         ProviderScope(
           retry: noAutomaticRetry,
-          overrides: [envProvider.overrideWithValue(env), sharedPrefsProvider.overrideWithValue(prefs), tokenStoreProvider.overrideWithValue(tokens)],
+          overrides: [
+            envProvider.overrideWithValue(env),
+            sharedPrefsProvider.overrideWithValue(prefs),
+            tokenStoreProvider.overrideWithValue(tokens),
+            pushServiceProvider.overrideWithValue(push),
+          ],
           child: const HostelApp(),
         ),
       );

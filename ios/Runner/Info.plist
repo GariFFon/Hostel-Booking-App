@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose photos of a problem to attach to your complaint.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo of a problem to attach to your complaint.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -74,5 +78,19 @@
 	</dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Google Sign-In: the iOS OAuth client id (a public identifier) and its reversed form as the URL scheme Google returns to. -->
+	<key>GIDClientID</key>
+	<string>72982205614-8iteashrgqs7p5e3u3b2844mkl27npoc.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.72982205614-8iteashrgqs7p5e3u3b2844mkl27npoc</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -27,6 +27,10 @@ import 'gallery.dart';
 import 'location_card.dart';
 import 'rooms_section.dart';
 import 'stay_dates.dart';
+import '../../tenancy/application/tenancy_providers.dart';
+import '../../tenancy/presentation/apply_sheet.dart';
+import '../../auth/application/session.dart';
+import '../../../shared/widgets/feedback.dart';
 
 class HostelScreen extends ConsumerWidget {
   const HostelScreen({super.key, required this.slug, this.checkIn, this.checkOut, this.guests = 1});
@@ -44,7 +48,13 @@ class HostelScreen extends ConsumerWidget {
       error: (e, _) => Scaffold(
         appBar: AppBar(),
         body: e is ApiException && e.isNotFound
-            ? EmptyState(icon: Icons.home_work_outlined, title: "This stay isn't available", message: 'It may have been taken down. Browse other places instead.', actionLabel: 'Back to search', onAction: () => context.go(Routes.explore))
+            ? EmptyState(
+                icon: Icons.home_work_outlined,
+                title: "This stay isn't available",
+                message: 'It may have been taken down. Browse other places instead.',
+                actionLabel: 'Back to search',
+                onAction: () => context.go(Routes.explore),
+              )
             : ErrorState(error: e, onRetry: () => ref.invalidate(hostelDetailProvider(slug))),
       ),
       data: (h) => _HostelBody(hostel: h, stayKey: (slug, checkIn, checkOut, guests)),
@@ -73,25 +83,34 @@ class _HostelBody extends ConsumerWidget {
     final topInset = MediaQuery.paddingOf(context).top;
 
     Widget section(String title, Widget child, {Widget? trailing}) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(children: [Expanded(child: Text(title, style: t.headlineSmall)), ?trailing]),
-              const SizedBox(height: 12),
-              child,
+              Expanded(child: Text(title, style: t.headlineSmall)),
+              ?trailing,
             ],
           ),
-        );
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
 
     final amenities = h.amenities;
     return Scaffold(
-      bottomNavigationBar: _ReserveBar(hostel: h, stayKey: stayKey, onPickDates: () => _pickDates(context, ref)),
+      bottomNavigationBar: h.propertyType.isLongTerm
+          ? _LongTermBar(hostel: h)
+          : _ReserveBar(hostel: h, stayKey: stayKey, onPickDates: () => _pickDates(context, ref)),
       body: Stack(
         children: [
           CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: HostelGallery(photos: h.gallery, name: h.name)),
+              SliverToBoxAdapter(
+                child: HostelGallery(photos: h.gallery, name: h.name),
+              ),
               SliverList(
                 delegate: SliverChildListDelegate([
                   Padding(
@@ -109,7 +128,9 @@ class _HostelBody extends ConsumerWidget {
                             RatingBadge(rating: h.avgRating, reviews: h.reviewCount, size: 15),
                             InfoPill(h.propertyType.label),
                             if (h.genderPolicy != GenderPolicy.mixed) InfoPill(h.genderPolicy.label, icon: Icons.group_outlined),
-                            h.bookingMode.isInstant ? const InfoPill('Instant book', icon: Icons.bolt_rounded) : const InfoPill('Request to book', icon: Icons.mark_email_unread_outlined),
+                            h.bookingMode.isInstant
+                                ? const InfoPill('Instant book', icon: Icons.bolt_rounded)
+                                : const InfoPill('Request to book', icon: Icons.mark_email_unread_outlined),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -118,12 +139,34 @@ class _HostelBody extends ConsumerWidget {
                           children: [
                             Icon(Icons.place_outlined, size: 18, color: c.mutedForeground),
                             const SizedBox(width: 6),
-                            Expanded(child: Text([if (h.address.locality != null && h.address.locality!.isNotEmpty) h.address.locality!, h.address.city, h.address.state].where((s) => s.isNotEmpty).join(', '), style: t.bodyMedium?.copyWith(color: c.mutedForeground))),
+                            Expanded(
+                              child: Text(
+                                [
+                                  if (h.address.locality != null && h.address.locality!.isNotEmpty) h.address.locality!,
+                                  h.address.city,
+                                  h.address.state,
+                                ].where((s) => s.isNotEmpty).join(', '),
+                                style: t.bodyMedium?.copyWith(color: c.mutedForeground),
+                              ),
+                            ),
                           ],
                         ),
                         if (h.host.name != null && h.host.name!.trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Row(children: [Icon(Icons.person_outline_rounded, size: 18, color: c.mutedForeground), const SizedBox(width: 6), Expanded(child: Text('Hosted by ${h.host.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: t.bodyMedium?.copyWith(color: c.mutedForeground)))]),
+                          Row(
+                            children: [
+                              Icon(Icons.person_outline_rounded, size: 18, color: c.mutedForeground),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Hosted by ${h.host.name}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: t.bodyMedium?.copyWith(color: c.mutedForeground),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ],
                     ),
@@ -135,19 +178,32 @@ class _HostelBody extends ConsumerWidget {
                         TileRow(
                           icon: Icons.calendar_month_outlined,
                           label: 'Dates',
-                          value: sel.hasDates ? '${fmtRange(sel.checkIn!, sel.checkOut!)} · ${plural(sel.nights, 'night')}' : 'Add dates to see prices',
+                          value: sel.hasDates
+                              ? '${fmtRange(sel.checkIn!, sel.checkOut!)} · ${plural(sel.nights, 'night')}'
+                              : 'Add dates to see prices',
                           onTap: () => _pickDates(context, ref),
                           trailing: sel.hasDates
-                              ? Pressable(onTap: notifier.clearDates, semanticLabel: 'Clear dates', minSize: const Size(kMinTap, kMinTap), child: Icon(Icons.close_rounded, size: 20, color: c.mutedForeground))
+                              ? Pressable(
+                                  onTap: notifier.clearDates,
+                                  semanticLabel: 'Clear dates',
+                                  minSize: const Size(kMinTap, kMinTap),
+                                  child: Icon(Icons.close_rounded, size: 20, color: c.mutedForeground),
+                                )
                               : null,
                         ),
                         const SizedBox(height: 10),
-                        TileRow(icon: Icons.group_outlined, label: 'Guests', value: plural(sel.guests, 'guest'), trailing: CountStepper(value: sel.guests, min: 1, max: 30, onChanged: notifier.setGuests, noun: 'guests')),
+                        TileRow(
+                          icon: Icons.group_outlined,
+                          label: 'Guests',
+                          value: plural(sel.guests, 'guest'),
+                          trailing: CountStepper(value: sel.guests, min: 1, max: 30, onChanged: notifier.setGuests, noun: 'guests'),
+                        ),
                       ],
                     ),
                   ),
                   section('Rooms', RoomsSection(hostel: h, stayKey: stayKey, onPickDates: () => _pickDates(context, ref))),
-                  if (h.description.trim().isNotEmpty) section('About this place', ExpandableText(h.description.trim(), maxLines: 5, style: t.bodyLarge)),
+                  if (h.description.trim().isNotEmpty)
+                    section('About this place', ExpandableText(h.description.trim(), maxLines: 5, style: t.bodyLarge)),
                   if (amenities.isNotEmpty)
                     section(
                       'What this place offers',
@@ -159,21 +215,30 @@ class _HostelBody extends ConsumerWidget {
                               for (final a in amenities.take(8))
                                 SizedBox(
                                   width: (MediaQuery.sizeOf(context).width - 32) / 2,
-                                  child: Row(children: [Icon(amenityIcon(a.code), size: 22, color: c.foreground), const SizedBox(width: 10), Expanded(child: Text(a.label, maxLines: 2, overflow: TextOverflow.ellipsis, style: t.bodyMedium))]),
+                                  child: Row(
+                                    children: [
+                                      Icon(amenityIcon(a.code), size: 22, color: c.foreground),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(a.label, maxLines: 2, overflow: TextOverflow.ellipsis, style: t.bodyMedium),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                             ],
                           ),
                           if (amenities.length > 8) ...[
                             const SizedBox(height: 12),
-                            AppButton(label: 'Show all ${amenities.length} amenities', onPressed: () => _showAmenities(context, amenities), variant: AppButtonVariant.secondary),
+                            AppButton(
+                              label: 'Show all ${amenities.length} amenities',
+                              onPressed: () => _showAmenities(context, amenities),
+                              variant: AppButtonVariant.secondary,
+                            ),
                           ],
                         ],
                       ),
                     ),
-                  section(
-                    h.reviewCount > 0 ? 'Reviews' : 'Reviews',
-                    HostelReviewsSection(slug: h.slug, reviewCount: h.reviewCount),
-                  ),
+                  section(h.reviewCount > 0 ? 'Reviews' : 'Reviews', HostelReviewsSection(slug: h.slug, reviewCount: h.reviewCount)),
                   section('Where you will be', LocationCard(name: h.name, address: h.address, location: h.location)),
                   section(
                     'Good to know',
@@ -182,14 +247,22 @@ class _HostelBody extends ConsumerWidget {
                       children: [
                         _Fact(icon: Icons.login_rounded, label: 'Check-in', value: 'From ${fmtClock(h.checkInTime)}'),
                         _Fact(icon: Icons.logout_rounded, label: 'Check-out', value: 'By ${fmtClock(h.checkOutTime)}'),
-                        _Fact(icon: Icons.event_available_outlined, label: 'Cancellation: ${h.cancellation.policy.label}', value: h.cancellation.summary),
+                        _Fact(
+                          icon: Icons.event_available_outlined,
+                          label: 'Cancellation: ${h.cancellation.policy.label}',
+                          value: h.cancellation.summary,
+                        ),
                         if (h.houseRules != null && h.houseRules!.trim().isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Text('House rules', style: t.titleSmall),
                           const SizedBox(height: 4),
                           ExpandableText(h.houseRules!.trim(), maxLines: 4),
                         ],
-                        if (h.tax.note.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(h.tax.note, style: t.bodySmall)),
+                        if (h.tax.note.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Text(h.tax.note, style: t.bodySmall),
+                          ),
                       ],
                     ),
                   ),
@@ -212,7 +285,11 @@ class _HostelBody extends ConsumerWidget {
                   child: Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(color: c.card.withValues(alpha: 0.94), shape: BoxShape.circle, border: Border.all(color: c.border)),
+                    decoration: BoxDecoration(
+                      color: c.card.withValues(alpha: 0.94),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: c.border),
+                    ),
                     child: Icon(Icons.arrow_back_rounded, size: 20, color: c.foreground),
                   ),
                 ),
@@ -239,8 +316,21 @@ class _HostelBody extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final e in byCategory.entries) ...[
-              Padding(padding: const EdgeInsets.only(top: 8, bottom: 8), child: Text(humanize(e.key), style: ctx.text.titleSmall)),
-              for (final a in e.value) Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Row(children: [Icon(amenityIcon(a.code), size: 22), const SizedBox(width: 12), Expanded(child: Text(a.label, style: ctx.text.bodyLarge))])),
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                child: Text(humanize(e.key), style: ctx.text.titleSmall),
+              ),
+              for (final a in e.value)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(amenityIcon(a.code), size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(a.label, style: ctx.text.bodyLarge)),
+                    ],
+                  ),
+                ),
             ],
           ],
         ),
@@ -265,7 +355,15 @@ class _Fact extends StatelessWidget {
         children: [
           Icon(icon, size: 22, color: c.mutedForeground),
           const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: context.text.titleSmall), if (value.isNotEmpty) Text(value, style: context.text.bodyMedium?.copyWith(color: c.mutedForeground))])),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: context.text.titleSmall),
+                if (value.isNotEmpty) Text(value, style: context.text.bodyMedium?.copyWith(color: c.mutedForeground)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -305,9 +403,19 @@ class _ReserveBar extends ConsumerWidget {
       sub = 'Add more beds or rooms for your group';
       button = AppButton(label: cta, onPressed: null, expand: false);
     } else {
-      final quote = ref.watch(quoteProvider(QuoteArgs(hostelId: hostel.id, checkIn: sel.checkIn!, checkOut: sel.checkOut!, guests: sel.guests, items: sel.items)));
-      headline = quote.when(data: (q) => q.totalPaise == 0 ? 'Free' : money(q.totalPaise), loading: () => 'Pricing…', error: (_, _) => 'Price unavailable');
-      sub = quote.when(data: (q) => '${plural(q.nights, 'night')} · incl. taxes', loading: () => 'Checking availability', error: (e, _) => errorText(e));
+      final quote = ref.watch(
+        quoteProvider(QuoteArgs(hostelId: hostel.id, checkIn: sel.checkIn!, checkOut: sel.checkOut!, guests: sel.guests, items: sel.items)),
+      );
+      headline = quote.when(
+        data: (q) => q.totalPaise == 0 ? 'Free' : money(q.totalPaise),
+        loading: () => 'Pricing…',
+        error: (_, _) => 'Price unavailable',
+      );
+      sub = quote.when(
+        data: (q) => '${plural(q.nights, 'night')} · incl. taxes',
+        loading: () => 'Checking availability',
+        error: (e, _) => errorText(e),
+      );
       button = AppButton(
         label: cta,
         loading: quote.isLoading,
@@ -324,7 +432,10 @@ class _ReserveBar extends ConsumerWidget {
 
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
-      decoration: BoxDecoration(color: c.card, border: Border(top: BorderSide(color: c.border))),
+      decoration: BoxDecoration(
+        color: c.card,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
       child: Row(
         children: [
           Expanded(
@@ -361,11 +472,78 @@ class _HostelSkeleton extends StatelessWidget {
               padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [SkeletonBox(width: 260, height: 28), SizedBox(height: 12), SkeletonBox(width: 180, height: 16), SizedBox(height: 28), SkeletonBox(height: 60, radius: 12), SizedBox(height: 12), SkeletonBox(height: 60, radius: 12), SizedBox(height: 28), SkeletonBox(height: 140, radius: 16)],
+                children: [
+                  SkeletonBox(width: 260, height: 28),
+                  SizedBox(height: 12),
+                  SkeletonBox(width: 180, height: 16),
+                  SizedBox(height: 28),
+                  SkeletonBox(height: 60, radius: 12),
+                  SizedBox(height: 12),
+                  SkeletonBox(height: 60, radius: 12),
+                  SizedBox(height: 28),
+                  SkeletonBox(height: 140, radius: 16),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Hostels and PGs are rented monthly: show the rent and terms, and let a signed-in student ask for a bed.
+class _LongTermBar extends ConsumerWidget {
+  const _LongTermBar({required this.hostel});
+  final HostelDetail hostel;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final t = context.text;
+    final terms = ref.watch(tenancyTermsProvider(hostel.id));
+    final signedIn = ref.watch(currentUserProvider) != null;
+    final free = terms.value?.freeUnits;
+
+    Future<void> request() async {
+      if (!signedIn) {
+        context.push('${Routes.login}?next=${Uri.encodeComponent('/hostel/${hostel.slug}')}');
+        return;
+      }
+      final sent = await showApplySheet(context, hostelId: hostel.id, hostelName: hostel.name, genderPolicy: hostel.genderPolicy);
+      if (sent == true && context.mounted) showToast(context, 'Request sent. We will tell you when the owner replies.');
+    }
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
+      decoration: BoxDecoration(
+        color: c.card,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hostel.fromPricePaise == null ? 'Rent on request' : 'From ${money(hostel.fromPricePaise)} / month',
+                  style: t.titleMedium?.tabular,
+                ),
+                if (terms.value != null)
+                  Text(
+                    '${plural(terms.value!.depositMonths, 'month')} deposit · ${plural(terms.value!.noticeDays, 'day')} notice · ${plural(free ?? 0, 'bed')} free',
+                    style: t.bodySmall,
+                  )
+                else
+                  Text('Long-term stay with monthly rent', style: t.bodySmall),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          AppButton(label: free == 0 ? 'No beds free' : 'Request a bed', onPressed: terms.hasValue && free != 0 ? request : null, expand: false),
+        ],
       ),
     );
   }

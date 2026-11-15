@@ -47,7 +47,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) leaveAuth(context, widget.next);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _error = (e.status == 401 || e.isUnauthenticated) ? "That email and password don't match. Check them and try again." : e.userMessage);
+      setState(
+        () => _error = (e.status == 401 || e.isUnauthenticated) ? "That email and password don't match. Check them and try again." : e.userMessage,
+      );
       HapticFeedback.mediumImpact();
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -66,7 +68,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         children: [
           Text('New here?', style: context.text.bodyMedium?.copyWith(color: context.colors.mutedForeground)),
           const SizedBox(width: 4),
-          AppButton(label: 'Create an account', onPressed: () => context.pushReplacement('/register$nextQuery'), variant: AppButtonVariant.ghost, expand: false, compact: true),
+          AppButton(
+            label: 'Create an account',
+            onPressed: () => context.pushReplacement('/register$nextQuery'),
+            variant: AppButtonVariant.ghost,
+            expand: false,
+            compact: true,
+          ),
         ],
       ),
       children: [
@@ -103,10 +111,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         Align(
           alignment: Alignment.centerRight,
-          child: AppButton(label: 'Forgot password?', onPressed: _busy ? null : () => context.push('/forgot-password'), variant: AppButtonVariant.ghost, expand: false, compact: true),
+          child: AppButton(
+            label: 'Forgot password?',
+            onPressed: _busy ? null : () => context.push('/forgot-password'),
+            variant: AppButtonVariant.ghost,
+            expand: false,
+            compact: true,
+          ),
         ),
         if (_error != null) ...[FormErrorBanner(_error!), const SizedBox(height: 16)],
         AppButton(label: 'Sign in', onPressed: _submit, loading: _busy),
+        GoogleSignInSection(next: widget.next, enabled: !_busy),
       ],
     );
   }

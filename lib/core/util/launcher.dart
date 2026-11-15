@@ -9,4 +9,7 @@ Future<bool> openMaps(double latitude, double longitude, {String? label}) {
 /// Opens the dialer. The number is the property's own, shown only after a booking is confirmed.
 Future<bool> callPhone(String number) => launchUrl(Uri(scheme: 'tel', path: number.replaceAll(RegExp(r'[^\d+]'), '')));
 
+/// Opens a web link (a receipt PDF) in the browser / PDF viewer, outside the app.
+Future<bool> openExternalUrl(String url) => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+
 Future<bool> openEmail(String address) => launchUrl(Uri(scheme: 'mailto', path: address));

@@ -23,6 +23,16 @@ import '../../features/host/presentation/host_lists_screens.dart';
 import '../../features/hostels/presentation/explore_screen.dart';
 import '../../features/reviews/presentation/hostel_reviews_screen.dart';
 import '../../features/hostels/presentation/hostel_screen.dart';
+import '../../features/tenancy/presentation/host_tenants_screen.dart';
+import '../../features/tenancy/presentation/my_stay_screen.dart';
+import '../../features/complaints/presentation/complaint_detail_screen.dart';
+import '../../features/complaints/presentation/host_complaints_screen.dart';
+import '../../features/host/presentation/host_gate.dart';
+import '../../features/complaints/presentation/host_staff_screen.dart';
+import '../../features/complaints/presentation/join_team_screen.dart';
+import '../../features/complaints/presentation/my_complaints_screen.dart';
+import '../../features/complaints/presentation/staff_jobs_screen.dart';
+import '../../features/rent/presentation/host_rent_screen.dart';
 import '../format/format.dart';
 import 'main_shell.dart';
 import 'routes.dart';
@@ -33,7 +43,12 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(deb
 /// while it is unknown you see the splash, signed-out visitors are sent to sign in (and brought back), signed-in users skip sign-in.
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
-  ref.listen(sessionProvider, (_, _) => refresh.value++);
+  ref.listen(sessionProvider, (prev, next) {
+    // An in-app sign-in (signed out -> signed in) is left by `leaveAuth` in the auth screen. Re-running the redirect as well races with its
+    // pop on a *pushed* login and leaves the sign-in page on screen. Cold start (loading -> value) and sign-out still refresh.
+    final signedInHere = prev != null && prev.hasValue && prev.value == null && next.value != null;
+    if (!signedInHere) refresh.value++;
+  });
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
@@ -111,6 +126,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: Routes.hostListings, builder: (_, _) => const HostListingsScreen()),
+      GoRoute(path: Routes.hostTenants, builder: (_, _) => const HostTenantsScreen()),
+      GoRoute(path: Routes.hostRent, builder: (_, _) => const HostRentScreen()),
+      GoRoute(path: Routes.hostComplaints, builder: (_, _) => const HostComplaintsScreen()),
+      GoRoute(
+        path: '${Routes.hostComplaints}/:id',
+        builder: (_, s) => HostGate(
+          title: 'Complaint',
+          child: ComplaintDetailScreen(id: s.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(path: Routes.hostStaff, builder: (_, _) => const HostStaffScreen()),
+      GoRoute(path: Routes.stay, builder: (_, _) => const MyStayScreen()),
+      GoRoute(path: Routes.myComplaints, builder: (_, _) => const MyComplaintsScreen()),
+      GoRoute(
+        path: '${Routes.myComplaints}/:id',
+        builder: (_, s) => ComplaintDetailScreen(id: s.pathParameters['id']!),
+      ),
+      GoRoute(path: Routes.staffJobs, builder: (_, _) => const StaffJobsScreen()),
+      GoRoute(path: Routes.joinTeam, builder: (_, _) => const JoinTeamScreen()),
+      GoRoute(
+        path: '${Routes.staffJobs}/jobs/:id',
+        builder: (_, s) => ComplaintDetailScreen(id: s.pathParameters['id']!, staff: true),
+      ),
       GoRoute(path: Routes.hostReviews, builder: (_, _) => const HostReviewsScreen()),
       GoRoute(
         path: '/host/bookings/:id',

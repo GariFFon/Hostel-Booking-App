@@ -27,6 +27,16 @@ abstract final class Routes {
   static const hostBookings = '/host/bookings';
   static const hostListings = '/host/listings';
   static const hostReviews = '/host/reviews';
+  static const hostTenants = '/host/tenants';
+  static const hostRent = '/host/rent';
+  static const hostComplaints = '/host/complaints';
+  static const hostStaff = '/host/staff';
+  static const stay = '/account/stay';
+  static const myComplaints = '/account/complaints';
+
+  // Maintenance staff
+  static const staffJobs = '/staff';
+  static const joinTeam = '/account/join-team';
 
   static String hostel(String slug, {DateTime? checkIn, DateTime? checkOut, int? guests}) {
     final q = <String, String>{
@@ -57,5 +67,7 @@ abstract final class Routes {
       location.startsWith('/trips/') ||
       location.startsWith('/account/') ||
       location == host || // not `startsWith('/host')`: that would also catch the public `/hostel/:slug` pages
-      location.startsWith('$host/');
+      location.startsWith('$host/') ||
+      location == staffJobs ||
+      location.startsWith('$staffJobs/');
 }

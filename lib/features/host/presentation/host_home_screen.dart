@@ -91,6 +91,30 @@ class HostHomeScreen extends ConsumerWidget {
                     onTap: () => context.push(Routes.hostListings),
                   ),
                   SettingsTile(
+                    icon: Icons.payments_outlined,
+                    title: 'Rent',
+                    subtitle: 'Invoices, what is owed, record payments',
+                    onTap: () => context.push(Routes.hostRent),
+                  ),
+                  SettingsTile(
+                    icon: Icons.groups_outlined,
+                    title: 'Tenants',
+                    subtitle: 'Requests for beds and who lives with you',
+                    onTap: () => context.push(Routes.hostTenants),
+                  ),
+                  SettingsTile(
+                    icon: Icons.build_circle_outlined,
+                    title: 'Complaints',
+                    subtitle: 'Problems tenants report, and who fixes them',
+                    onTap: () => context.push(Routes.hostComplaints),
+                  ),
+                  SettingsTile(
+                    icon: Icons.engineering_outlined,
+                    title: 'Staff',
+                    subtitle: 'Your maintenance team and platform vendors',
+                    onTap: () => context.push(Routes.hostStaff),
+                  ),
+                  SettingsTile(
                     icon: Icons.star_outline_rounded,
                     title: 'Reviews',
                     subtitle: 'Reply to your guests',

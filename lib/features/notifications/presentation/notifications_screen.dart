@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/format.dart';
-import '../../../core/router/routes.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/feedback.dart';
@@ -12,28 +11,11 @@ import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/states.dart';
 import '../application/notification_providers.dart';
 import '../domain/notification_models.dart';
+import 'notification_routes.dart';
 
 /// The in-app inbox. Tapping a row marks it read and opens whatever it is about; swiping removes it.
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
-
-  /// Host-facing notifications open the host view of the same booking.
-  String? _target(NotificationItem n) {
-    final booking = n.bookingId;
-    switch (n.type) {
-      case NotificationType.bookingApprovalRequested:
-        return booking == null ? Routes.host : Routes.hostBooking(booking);
-      case NotificationType.reviewReceived:
-        return Routes.hostReviews;
-      case NotificationType.hostelApproved:
-      case NotificationType.hostelRejected:
-        return Routes.hostListings;
-      case NotificationType.reviewReplied:
-        return Routes.myReviews;
-      default:
-        return booking == null ? null : Routes.booking(booking);
-    }
-  }
 
   IconData _icon(NotificationType t) => switch (t) {
     NotificationType.bookingConfirmed || NotificationType.bookingApproved => Icons.check_circle_outline_rounded,
@@ -46,6 +28,20 @@ class NotificationsScreen extends ConsumerWidget {
     NotificationType.reviewRequested || NotificationType.reviewReceived || NotificationType.reviewReplied => Icons.star_outline_rounded,
     NotificationType.hostelApproved || NotificationType.hostelRejected => Icons.home_work_outlined,
     NotificationType.kycApproved || NotificationType.kycRejected => Icons.verified_user_outlined,
+    NotificationType.tenancyRequested ||
+    NotificationType.tenancyApproved ||
+    NotificationType.tenancyInvited ||
+    NotificationType.tenancyStarted => Icons.house_outlined,
+    NotificationType.tenancyRejected || NotificationType.tenancyEnded || NotificationType.tenancyNotice => Icons.home_work_outlined,
+    NotificationType.rentPaid => Icons.payments_outlined,
+    NotificationType.rentOverdue => Icons.warning_amber_rounded,
+    NotificationType.rentInvoiceIssued || NotificationType.rentDueSoon => Icons.receipt_long_outlined,
+    NotificationType.depositSettled => Icons.account_balance_wallet_outlined,
+    NotificationType.complaintCreated => Icons.report_problem_outlined,
+    NotificationType.complaintAssigned => Icons.assignment_ind_outlined,
+    NotificationType.complaintUpdated => Icons.build_circle_outlined,
+    NotificationType.complaintResolved => Icons.task_alt_rounded,
+    NotificationType.staffInvited => Icons.engineering_outlined,
     _ => Icons.notifications_none_rounded,
   };
 
@@ -93,7 +89,7 @@ class NotificationsScreen extends ConsumerWidget {
           message: 'Booking updates, payments and review replies show up here.',
         ),
         itemBuilder: (context, n, _) {
-          final target = _target(n);
+          final target = notificationRoute(n);
           return Dismissible(
             key: ValueKey(n.id),
             direction: DismissDirection.endToStart,

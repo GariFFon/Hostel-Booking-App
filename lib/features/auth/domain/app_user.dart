@@ -3,7 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'app_user.g.dart';
 
 @JsonEnum(fieldRename: FieldRename.screamingSnake)
-enum UserRole { guest, owner, admin, unknown }
+enum UserRole { guest, owner, admin, staff, unknown }
 
 @JsonEnum(fieldRename: FieldRename.screamingSnake)
 enum KycStatus { notSubmitted, pending, approved, rejected, unknown }
@@ -40,6 +40,7 @@ class AppUser {
 
   bool get isOwner => roles.contains(UserRole.owner);
   bool get isAdmin => roles.contains(UserRole.admin);
+  bool get isStaff => roles.contains(UserRole.staff);
 
   /// What to call this person: first name, else the part of the email before the @.
   String get displayName {

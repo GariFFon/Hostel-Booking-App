@@ -38,6 +38,7 @@ OwnerHostel _$OwnerHostelFromJson(Map<String, dynamic> json) => OwnerHostel(
 const _$PropertyTypeEnumMap = {
   PropertyType.hostel: 'HOSTEL',
   PropertyType.pg: 'PG',
+  PropertyType.hotel: 'HOTEL',
   PropertyType.unknown: 'UNKNOWN',
 };
 

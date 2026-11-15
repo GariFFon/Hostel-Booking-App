@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/notifications/application/push_coordinator.dart';
 
 class HostelApp extends ConsumerWidget {
   const HostelApp({super.key});
@@ -12,6 +13,7 @@ class HostelApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    ref.watch(pushCoordinatorProvider); // registers this phone for push while someone is signed in
     final mode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: 'Hostel Booking',

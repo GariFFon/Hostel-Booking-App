@@ -36,6 +36,9 @@ class ApiException implements Exception {
     return out;
   }
 
+  /// A problem found on the phone before anything was sent (a photo that is too big): shown as-is.
+  factory ApiException.local(String message) => ApiException(code: 'INVALID_FILE', message: message);
+
   /// Something safe and readable to show a person, never a stack trace or an enum name.
   String get userMessage {
     switch (code) {

@@ -47,7 +47,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
     TextInput.finishAutofillContext();
     try {
-      await ref.read(sessionProvider.notifier).signUp(
+      await ref
+          .read(sessionProvider.notifier)
+          .signUp(
             fullName: _name.text,
             email: _email.text,
             password: _password.text,
@@ -58,7 +60,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (!mounted) return;
       setState(() {
         _server = e.fieldErrors;
-        _error = e.fieldErrors.isEmpty ? (e.code == 'CONFLICT' ? 'An account with this email already exists. Try signing in instead.' : e.userMessage) : null;
+        _error = e.fieldErrors.isEmpty
+            ? (e.code == 'CONFLICT' ? 'An account with this email already exists. Try signing in instead.' : e.userMessage)
+            : null;
       });
       HapticFeedback.mediumImpact();
     } finally {
@@ -78,7 +82,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         children: [
           Text('Already have an account?', style: context.text.bodyMedium?.copyWith(color: context.colors.mutedForeground)),
           const SizedBox(width: 4),
-          AppButton(label: 'Sign in', onPressed: () => context.pushReplacement('/login$nextQuery'), variant: AppButtonVariant.ghost, expand: false, compact: true),
+          AppButton(
+            label: 'Sign in',
+            onPressed: () => context.pushReplacement('/login$nextQuery'),
+            variant: AppButtonVariant.ghost,
+            expand: false,
+            compact: true,
+          ),
         ],
       ),
       children: [
@@ -142,6 +152,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         const SizedBox(height: 20),
         if (_error != null) ...[FormErrorBanner(_error!), const SizedBox(height: 16)],
         AppButton(label: 'Create account', onPressed: _submit, loading: _busy),
+        GoogleSignInSection(next: widget.next, enabled: !_busy),
       ],
     );
   }

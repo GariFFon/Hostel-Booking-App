@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/api_exception.dart';
+import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/brand.dart';
+import '../application/session.dart';
 
 /// Shared frame for the sign-in family of screens: brand mark, headline, scrollable keyboard-safe body.
 class AuthScaffold extends StatelessWidget {
@@ -68,7 +74,9 @@ class FormErrorBanner extends StatelessWidget {
           children: [
             Icon(Icons.error_outline_rounded, size: 20, color: c.destructive),
             const SizedBox(width: 10),
-            Expanded(child: Text(message, style: context.text.bodyMedium?.copyWith(color: c.destructive))),
+            Expanded(
+              child: Text(message, style: context.text.bodyMedium?.copyWith(color: c.destructive)),
+            ),
           ],
         ),
       ),
@@ -92,4 +100,72 @@ void leaveAuth(BuildContext context, String? next) {
     final here = router.routeInformationProvider.value.uri.toString();
     if (here != target) router.push(target);
   });
+}
+
+/// "or" divider + "Continue with Google". Closing the Google sheet is silent; real failures are shown in words.
+class GoogleSignInSection extends ConsumerStatefulWidget {
+  const GoogleSignInSection({super.key, required this.next, this.enabled = true});
+  final String? next;
+  final bool enabled;
+
+  @override
+  ConsumerState<GoogleSignInSection> createState() => _GoogleSignInSectionState();
+}
+
+class _GoogleSignInSectionState extends ConsumerState<GoogleSignInSection> {
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _go() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final token = await ref.read(googleSignerProvider).idToken();
+      if (token == null) return; // closed the Google sheet
+      await ref.read(sessionProvider.notifier).signInWithGoogle(token);
+      if (mounted) leaveAuth(context, widget.next);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      setState(() => _error = e.userMessage);
+    } catch (_) {
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      setState(() => _error = "Google sign-in didn't work. Try again, or use your email and password.");
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(child: Divider(color: c.border)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text('or', style: context.text.bodySmall),
+            ),
+            Expanded(child: Divider(color: c.border)),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (_error != null) ...[FormErrorBanner(_error!), const SizedBox(height: 12)],
+        AppButton(
+          label: 'Continue with Google',
+          icon: Icons.g_mobiledata_rounded,
+          variant: AppButtonVariant.secondary,
+          loading: _busy,
+          onPressed: widget.enabled ? _go : null,
+        ),
+      ],
+    );
+  }
 }

@@ -37,6 +37,7 @@ const _$UserRoleEnumMap = {
   UserRole.guest: 'GUEST',
   UserRole.owner: 'OWNER',
   UserRole.admin: 'ADMIN',
+  UserRole.staff: 'STAFF',
   UserRole.unknown: 'UNKNOWN',
 };
 

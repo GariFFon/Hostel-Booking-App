@@ -102,6 +102,9 @@ class NotificationPrefsNotifier extends AsyncNotifier<NotificationPrefs> {
               emailMarketing: next.emailMarketing,
               inAppBookings: next.inAppBookings,
               inAppReviews: next.inAppReviews,
+              inAppRent: next.inAppRent,
+              emailRent: next.emailRent,
+              inAppComplaints: next.inAppComplaints,
             ),
       );
     } catch (_) {

@@ -80,6 +80,7 @@ HostelCard _$HostelCardFromJson(Map<String, dynamic> json) => HostelCard(
 const _$PropertyTypeEnumMap = {
   PropertyType.hostel: 'HOSTEL',
   PropertyType.pg: 'PG',
+  PropertyType.hotel: 'HOTEL',
   PropertyType.unknown: 'UNKNOWN',
 };
 

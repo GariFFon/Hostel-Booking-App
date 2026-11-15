@@ -59,7 +59,14 @@ class _SignedIn extends ConsumerWidget {
   final AppUser user;
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-    final ok = await confirmAction(context, title: 'Sign out?', message: 'You can sign back in any time.', confirmLabel: 'Sign out', cancelLabel: 'Stay signed in', destructive: true);
+    final ok = await confirmAction(
+      context,
+      title: 'Sign out?',
+      message: 'You can sign back in any time.',
+      confirmLabel: 'Sign out',
+      cancelLabel: 'Stay signed in',
+      destructive: true,
+    );
     if (!ok) return;
     await ref.read(sessionProvider.notifier).signOut();
   }
@@ -108,7 +115,12 @@ class _SignedIn extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(user.displayName, style: t.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text(user.email, style: t.bodyMedium?.copyWith(color: c.mutedForeground), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    user.email,
+                    style: t.bodyMedium?.copyWith(color: c.mutedForeground),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -118,7 +130,11 @@ class _SignedIn extends ConsumerWidget {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: c.tint(c.warning), borderRadius: Radii.baseR, border: Border.all(color: c.warning.withValues(alpha: 0.35))),
+            decoration: BoxDecoration(
+              color: c.tint(c.warning),
+              borderRadius: Radii.baseR,
+              border: Border.all(color: c.warning.withValues(alpha: 0.35)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -126,7 +142,13 @@ class _SignedIn extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text('Confirm ${user.email} so we can send booking confirmations.', style: t.bodyMedium),
                 const SizedBox(height: 8),
-                AppButton(label: 'Resend email', onPressed: () => _resend(context, ref), variant: AppButtonVariant.secondary, expand: false, compact: true),
+                AppButton(
+                  label: 'Resend email',
+                  onPressed: () => _resend(context, ref),
+                  variant: AppButtonVariant.secondary,
+                  expand: false,
+                  compact: true,
+                ),
               ],
             ),
           ),
@@ -135,10 +157,48 @@ class _SignedIn extends ConsumerWidget {
         SettingsGroup(
           title: 'You',
           children: [
-            SettingsTile(icon: Icons.notifications_none_rounded, title: 'Notifications', subtitle: unread > 0 ? '$unread unread' : 'You are all caught up', badge: unread, onTap: () => context.push(Routes.notifications)),
-            SettingsTile(icon: Icons.person_outline_rounded, title: 'Personal details', subtitle: 'Name and mobile number', onTap: () => context.push(Routes.profile)),
+            SettingsTile(
+              icon: Icons.notifications_none_rounded,
+              title: 'Notifications',
+              subtitle: unread > 0 ? '$unread unread' : 'You are all caught up',
+              badge: unread,
+              onTap: () => context.push(Routes.notifications),
+            ),
+            SettingsTile(
+              icon: Icons.person_outline_rounded,
+              title: 'Personal details',
+              subtitle: 'Name and mobile number',
+              onTap: () => context.push(Routes.profile),
+            ),
+            SettingsTile(
+              icon: Icons.house_outlined,
+              title: 'My stay',
+              subtitle: 'Your requests and where you live',
+              onTap: () => context.push(Routes.stay),
+            ),
+            SettingsTile(
+              icon: Icons.build_circle_outlined,
+              title: 'Complaints',
+              subtitle: 'Report a problem and follow it',
+              onTap: () => context.push(Routes.myComplaints),
+            ),
+            if (!user.isStaff)
+              SettingsTile(
+                icon: Icons.group_add_outlined,
+                title: 'Join a maintenance team',
+                subtitle: 'Have an invitation from an owner?',
+                onTap: () => context.push(Routes.joinTeam),
+              ),
+            if (user.isStaff)
+              SettingsTile(
+                icon: Icons.handyman_outlined,
+                title: 'My jobs',
+                subtitle: 'Maintenance jobs assigned to you',
+                onTap: () => context.push(Routes.staffJobs),
+              ),
             SettingsTile(icon: Icons.star_outline_rounded, title: 'Your reviews', onTap: () => context.push(Routes.myReviews)),
-            if (user.hasPassword) SettingsTile(icon: Icons.lock_outline_rounded, title: 'Change password', onTap: () => context.push(Routes.password)),
+            if (user.hasPassword)
+              SettingsTile(icon: Icons.lock_outline_rounded, title: 'Change password', onTap: () => context.push(Routes.password)),
             SettingsTile(icon: Icons.tune_rounded, title: 'Notification settings', onTap: () => context.push(Routes.notificationSettings)),
           ],
         ),
@@ -147,15 +207,27 @@ class _SignedIn extends ConsumerWidget {
           title: 'Hosting',
           children: [
             if (user.isOwner)
-              SettingsTile(icon: Icons.home_work_outlined, title: 'Switch to hosting', subtitle: 'Bookings, listings and reviews', onTap: () => context.push(Routes.host))
+              SettingsTile(
+                icon: Icons.home_work_outlined,
+                title: 'Switch to hosting',
+                subtitle: 'Bookings, listings and reviews',
+                onTap: () => context.push(Routes.host),
+              )
             else
-              SettingsTile(icon: Icons.add_home_work_outlined, title: 'Become a host', subtitle: 'List your hostel or PG', onTap: () => _becomeHost(context, ref)),
+              SettingsTile(
+                icon: Icons.add_home_work_outlined,
+                title: 'Become a host',
+                subtitle: 'List your hostel or PG',
+                onTap: () => _becomeHost(context, ref),
+              ),
           ],
         ),
         const SizedBox(height: 24),
         const SettingsGroup(title: 'Appearance', children: [_ThemeRow()]),
         const SizedBox(height: 24),
-        SettingsGroup(children: [SettingsTile(icon: Icons.logout_rounded, title: 'Sign out', destructive: true, onTap: () => _signOut(context, ref))]),
+        SettingsGroup(
+          children: [SettingsTile(icon: Icons.logout_rounded, title: 'Sign out', destructive: true, onTap: () => _signOut(context, ref))],
+        ),
       ],
     );
   }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 
 import 'api_exception.dart';
+import 'api_logger.dart';
 import 'envelope.dart';
 import 'token_store.dart';
 
@@ -15,7 +16,13 @@ class ApiClient {
   ApiClient({required String baseUrl, required this.tokens, Dio? dio, Dio? bareDio, this.onSignedOut, this.onSessionUser})
     : _dio = dio ?? Dio(_options(baseUrl)),
       _bare = bareDio ?? Dio(_options(baseUrl)) {
-    _dio.interceptors.add(_authInterceptor());
+    // Logging brackets auth: responses are logged first (a 401 that auth then retries still shows), the request last (it then
+    // carries the final Authorization header). The bare client (refresh, Cloudinary upload) logs both sides.
+    _dio.interceptors
+      ..add(ApiLogger(logRequests: false))
+      ..add(_authInterceptor())
+      ..add(ApiLogger(logResponses: false));
+    _bare.interceptors.add(ApiLogger());
   }
 
   static BaseOptions _options(String baseUrl) => BaseOptions(
@@ -194,6 +201,10 @@ extension ApiParsing on ApiClient {
     final e = await get(path, query: query, auth: auth, cancel: cancel);
     return Paged<T>(items: asList(e.data).map(parse).toList(), nextCursor: e.nextCursor, total: e.total);
   }
+
+  Future<T> putOne<T>(String path, T Function(JsonMap json) parse, {Object? body}) async => parse(asMap((await put(path, body: body)).data));
+
+  Future<T> deleteOne<T>(String path, T Function(JsonMap json) parse) async => parse(asMap((await delete(path)).data));
 
   Future<T> postOne<T>(String path, T Function(JsonMap json) parse, {Object? body, Map<String, String>? headers}) async =>
       parse(asMap((await post(path, body: body, headers: headers)).data));

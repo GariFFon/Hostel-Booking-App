@@ -7,7 +7,7 @@ import '../../../shared/widgets/states.dart';
 import '../../notifications/application/notification_providers.dart';
 import '../../notifications/domain/notification_models.dart';
 
-/// Four switches. Each flips at once and is put back with a message if the server refuses.
+/// Switches for bookings, stays and rent, complaints, and reviews and offers. Each flips at once and is put back with a message if the server refuses.
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
 
@@ -25,16 +25,66 @@ class NotificationSettingsScreen extends ConsumerWidget {
             _Group(
               title: 'Bookings',
               children: [
-                _Switch(label: 'Booking emails', subtitle: 'Confirmations, changes and receipts', value: p.emailBookings, onChanged: (v) => _set(context, ref, (x) => x.copyWith(emailBookings: v))),
-                _Switch(label: 'Booking alerts in the app', subtitle: 'Approvals, payments, reminders', value: p.inAppBookings, onChanged: (v) => _set(context, ref, (x) => x.copyWith(inAppBookings: v))),
+                _Switch(
+                  label: 'Booking emails',
+                  subtitle: 'Confirmations, changes and receipts',
+                  value: p.emailBookings,
+                  onChanged: (v) => _set(context, ref, (x) => x.copyWith(emailBookings: v)),
+                ),
+                _Switch(
+                  label: 'Booking alerts in the app',
+                  subtitle: 'Approvals, payments, reminders',
+                  value: p.inAppBookings,
+                  onChanged: (v) => _set(context, ref, (x) => x.copyWith(inAppBookings: v)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _Group(
+              title: 'Stay and rent',
+              children: [
+                _Switch(
+                  label: 'Stay, rent and deposit alerts in the app',
+                  subtitle: 'Move-in, rent bills, payments, notice, move-out and your deposit',
+                  value: p.inAppRent,
+                  onChanged: (v) => _set(context, ref, (x) => x.copyWith(inAppRent: v)),
+                ),
+                _Switch(
+                  label: 'Rent bill and reminder emails',
+                  subtitle: 'New bills, due soon and overdue. Receipts are always emailed',
+                  value: p.emailRent,
+                  onChanged: (v) => _set(context, ref, (x) => x.copyWith(emailRent: v)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _Group(
+              title: 'Complaints',
+              children: [
+                _Switch(
+                  label: 'Complaint alerts in the app',
+                  subtitle: 'Filed, assigned, updated, resolved, and visit times',
+                  value: p.inAppComplaints,
+                  onChanged: (v) => _set(context, ref, (x) => x.copyWith(inAppComplaints: v)),
+                ),
               ],
             ),
             const SizedBox(height: 24),
             _Group(
               title: 'Reviews and offers',
               children: [
-                _Switch(label: 'Review alerts in the app', subtitle: 'Review prompts after a stay, and replies from hosts', value: p.inAppReviews, onChanged: (v) => _set(context, ref, (x) => x.copyWith(inAppReviews: v))),
-                _Switch(label: 'Offers and tips by email', subtitle: 'Occasional. Never required to book', value: p.emailMarketing, onChanged: (v) => _set(context, ref, (x) => x.copyWith(emailMarketing: v))),
+                _Switch(
+                  label: 'Review alerts in the app',
+                  subtitle: 'Review prompts after a stay, and replies from hosts',
+                  value: p.inAppReviews,
+                  onChanged: (v) => _set(context, ref, (x) => x.copyWith(inAppReviews: v)),
+                ),
+                _Switch(
+                  label: 'Offers and tips by email',
+                  subtitle: 'Occasional. Never required to book',
+                  value: p.emailMarketing,
+                  onChanged: (v) => _set(context, ref, (x) => x.copyWith(emailMarketing: v)),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -65,15 +115,21 @@ class _Group extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(padding: const EdgeInsets.fromLTRB(4, 0, 4, 8), child: Text(title, style: context.text.labelMedium?.copyWith(color: c.mutedForeground))),
-        Container(
-          decoration: BoxDecoration(color: c.card, borderRadius: Radii.cardR, border: Border.all(color: c.border)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+          child: Text(title, style: context.text.labelMedium?.copyWith(color: c.mutedForeground)),
+        ),
+        // A Material (not a coloured box) so the switch rows can paint their ink splash.
+        Material(
+          color: c.card,
+          shape: RoundedRectangleBorder(
+            borderRadius: Radii.cardR,
+            side: BorderSide(color: c.border),
+          ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
-              for (var i = 0; i < children.length; i++) ...[
-                if (i > 0) Divider(height: 1, color: c.border),
-                children[i],
-              ],
+              for (var i = 0; i < children.length; i++) ...[if (i > 0) Divider(height: 1, color: c.border), children[i]],
             ],
           ),
         ),

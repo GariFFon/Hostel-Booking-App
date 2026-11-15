@@ -38,10 +38,9 @@ class _FiltersSheetState extends ConsumerState<_FiltersSheet> {
   void _apply() {
     final minP = _price.start.round();
     final maxP = _price.end.round();
-    ref.read(searchParamsProvider.notifier).set(_draft.copyWith(
-          minPricePaise: minP <= 0 ? null : minP * 100,
-          maxPricePaise: maxP >= _maxRupees ? null : maxP * 100,
-        ));
+    ref
+        .read(searchParamsProvider.notifier)
+        .set(_draft.copyWith(minPricePaise: minP <= 0 ? null : minP * 100, maxPricePaise: maxP >= _maxRupees ? null : maxP * 100));
     Navigator.of(context).pop();
   }
 
@@ -64,9 +63,16 @@ class _FiltersSheetState extends ConsumerState<_FiltersSheet> {
         : '${money(lo * 100)} – ${hi >= _maxRupees ? '${money(_maxRupees * 100)}+' : money(hi * 100)}';
 
     Widget section(String title, Widget child) => Padding(
-          padding: const EdgeInsets.only(bottom: 22),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: t.titleMedium), const SizedBox(height: 10), child]),
-        );
+      padding: const EdgeInsets.only(bottom: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: t.titleMedium),
+          const SizedBox(height: 10),
+          child,
+        ],
+      ),
+    );
 
     return SheetFrame(
       title: 'Filters',
@@ -74,7 +80,9 @@ class _FiltersSheetState extends ConsumerState<_FiltersSheet> {
         children: [
           AppButton(label: 'Clear all', onPressed: _reset, variant: AppButtonVariant.secondary, expand: false),
           const SizedBox(width: 12),
-          Expanded(child: AppButton(label: 'Show results', onPressed: _apply)),
+          Expanded(
+            child: AppButton(label: 'Show results', onPressed: _apply),
+          ),
         ],
       ),
       child: Column(
@@ -101,7 +109,12 @@ class _FiltersSheetState extends ConsumerState<_FiltersSheet> {
             'Property',
             AppSegmented<PropertyType?>(
               semanticLabel: 'Property type',
-              options: const [(value: null, label: 'Any'), (value: PropertyType.hostel, label: 'Hostel'), (value: PropertyType.pg, label: 'PG')],
+              options: const [
+                (value: null, label: 'Any'),
+                (value: PropertyType.hostel, label: 'Hostel'),
+                (value: PropertyType.pg, label: 'PG'),
+                (value: PropertyType.hotel, label: 'Hotel'),
+              ],
               value: _draft.propertyType,
               onChanged: (v) => _set(_draft.copyWith(propertyType: v)),
             ),
@@ -110,7 +123,11 @@ class _FiltersSheetState extends ConsumerState<_FiltersSheet> {
             'Room type',
             AppSegmented<RoomKind?>(
               semanticLabel: 'Room type',
-              options: const [(value: null, label: 'Any'), (value: RoomKind.dorm, label: 'Dorm bed'), (value: RoomKind.private, label: 'Private room')],
+              options: const [
+                (value: null, label: 'Any'),
+                (value: RoomKind.dorm, label: 'Dorm bed'),
+                (value: RoomKind.private, label: 'Private room'),
+              ],
               value: _draft.roomKind,
               onChanged: (v) => _set(_draft.copyWith(roomKind: v)),
             ),
@@ -172,7 +189,8 @@ class _FiltersSheetState extends ConsumerState<_FiltersSheet> {
                       label: Text(a.label),
                       selected: _draft.amenities.contains(a.code),
                       showCheckmark: false,
-                      onSelected: (on) => _set(_draft.copyWith(amenities: on ? {..._draft.amenities, a.code} : ({..._draft.amenities}..remove(a.code)))),
+                      onSelected: (on) =>
+                          _set(_draft.copyWith(amenities: on ? {..._draft.amenities, a.code} : ({..._draft.amenities}..remove(a.code)))),
                       selectedColor: c.accent,
                       backgroundColor: c.card,
                       side: BorderSide(color: _draft.amenities.contains(a.code) ? c.primary : c.border),

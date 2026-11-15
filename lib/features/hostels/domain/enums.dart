@@ -8,10 +8,14 @@ import '../../../core/format/format.dart';
 enum PropertyType {
   hostel('Hostel'),
   pg('PG'),
+  hotel('Hotel'),
   unknown('Stay');
 
   const PropertyType(this.label);
   final String label;
+
+  /// Hostels and PGs are rented long-term on a tenancy with monthly rent; hotels are booked by the night.
+  bool get isLongTerm => this == hostel || this == pg;
 }
 
 @JsonEnum(fieldRename: FieldRename.screamingSnake)

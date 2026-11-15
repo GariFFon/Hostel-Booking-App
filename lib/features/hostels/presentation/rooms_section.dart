@@ -28,15 +28,21 @@ class RoomsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sel = ref.watch(staySelectionProvider(stayKey));
-    final availability = sel.hasDates ? ref.watch(availabilityProvider(AvailabilityArgs(hostel.slug, sel.checkIn!, sel.checkOut!, sel.guests))) : null;
+    final availability = sel.hasDates
+        ? ref.watch(availabilityProvider(AvailabilityArgs(hostel.slug, sel.checkIn!, sel.checkOut!, sel.guests)))
+        : null;
 
     if (hostel.roomTypes.isEmpty) {
       return const SurfaceCard(child: Text('This property has not listed any rooms yet.'));
     }
+    if (hostel.propertyType.isLongTerm) return _LongTermRooms(rooms: hostel.roomTypes);
     return Column(
       children: [
         if (availability != null && availability.hasError)
-          Padding(padding: const EdgeInsets.only(bottom: 12), child: ErrorState(error: availability.error!, compact: true, onRetry: () => ref.invalidate(availabilityProvider))),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: ErrorState(error: availability.error!, compact: true, onRetry: () => ref.invalidate(availabilityProvider)),
+          ),
         for (final room in hostel.roomTypes)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -56,7 +62,15 @@ class RoomsSection extends ConsumerWidget {
 }
 
 class _RoomCard extends StatelessWidget {
-  const _RoomCard({required this.room, required this.hostel, required this.selection, required this.availability, required this.loading, required this.onPickDates, required this.onUnits});
+  const _RoomCard({
+    required this.room,
+    required this.hostel,
+    required this.selection,
+    required this.availability,
+    required this.loading,
+    required this.onPickDates,
+    required this.onUnits,
+  });
 
   final RoomType room;
   final HostelDetail hostel;
@@ -67,11 +81,11 @@ class _RoomCard extends StatelessWidget {
   final ValueChanged<int> onUnits;
 
   String? _ineligibleMessage(RoomAvailability a) => switch (a.reason) {
-        'SOLD_OUT' => 'Sold out for these dates',
-        'MIN_STAY' => 'Minimum stay is ${plural(room.minStayNights, 'night')}',
-        'MAX_STAY' => 'Maximum stay is ${plural(room.maxStayNights, 'night')}',
-        _ => 'Not available for these dates',
-      };
+    'SOLD_OUT' => 'Sold out for these dates',
+    'MIN_STAY' => 'Minimum stay is ${plural(room.minStayNights, 'night')}',
+    'MAX_STAY' => 'Maximum stay is ${plural(room.maxStayNights, 'night')}',
+    _ => 'Not available for these dates',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -86,14 +100,18 @@ class _RoomCard extends StatelessWidget {
     if (!selection.hasDates) {
       action = Row(
         children: [
-          Expanded(child: _Price(label: 'From', paise: room.fromPricePaise, per: per)),
+          Expanded(
+            child: _Price(label: 'From', paise: room.fromPricePaise, per: per),
+          ),
           AppButton(label: 'Select dates', onPressed: onPickDates, variant: AppButtonVariant.secondary, expand: false, compact: true),
         ],
       );
     } else if (loading || a == null) {
       action = const Skeleton(child: Row(children: [SkeletonBox(width: 120, height: 20), Spacer(), SkeletonBox(width: 96, height: 32, radius: 16)]));
     } else if (!a.eligible || a.availableUnits <= 0) {
-      action = Row(children: [StatusChip(_ineligibleMessage(a)!, tone: Tone.neutral, icon: Icons.event_busy_rounded)]);
+      action = Row(
+        children: [StatusChip(_ineligibleMessage(a)!, tone: Tone.neutral, icon: Icons.event_busy_rounded)],
+      );
     } else {
       final left = a.availableUnits;
       action = Row(
@@ -103,8 +121,13 @@ class _RoomCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _Price(label: null, paise: a.avgNightlyPaise ?? room.fromPricePaise, per: 'night avg'),
-                if (a.stayPerUnitPaise != null) Text('${money(a.stayPerUnitPaise)} for ${plural(selection.nights, 'night')}', style: t.bodySmall?.tabular),
-                if (left <= 3) Text('Only $left ${unitNoun(room.kind, n: left)} left', style: t.bodySmall?.copyWith(color: c.warning, fontWeight: FontWeight.w600)),
+                if (a.stayPerUnitPaise != null)
+                  Text('${money(a.stayPerUnitPaise)} for ${plural(selection.nights, 'night')}', style: t.bodySmall?.tabular),
+                if (left <= 3)
+                  Text(
+                    'Only $left ${unitNoun(room.kind, n: left)} left',
+                    style: t.bodySmall?.copyWith(color: c.warning, fontWeight: FontWeight.w600),
+                  ),
               ],
             ),
           ),
@@ -127,7 +150,10 @@ class _RoomCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (cover != null) ...[
-                ClipRRect(borderRadius: BorderRadius.circular(12), child: SizedBox(width: 84, height: 84, child: AppImage(url: cover, cacheWidth: 168))),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(width: 84, height: 84, child: AppImage(url: cover, cacheWidth: 168)),
+                ),
                 const SizedBox(width: 12),
               ],
               Expanded(
@@ -142,7 +168,8 @@ class _RoomCard extends StatelessWidget {
                       children: [
                         InfoPill(room.kind.label, icon: room.kind == RoomKind.dorm ? Icons.bed_outlined : Icons.meeting_room_outlined),
                         if (room.gender != RoomGender.mixed) InfoPill('${room.gender.label} only'),
-                        if (room.kind == RoomKind.private || room.maxOccupancyPerUnit > 1) InfoPill('Sleeps ${room.maxOccupancyPerUnit}', icon: Icons.group_outlined),
+                        if (room.kind == RoomKind.private || room.maxOccupancyPerUnit > 1)
+                          InfoPill('Sleeps ${room.maxOccupancyPerUnit}', icon: Icons.group_outlined),
                       ],
                     ),
                   ],
@@ -150,7 +177,10 @@ class _RoomCard extends StatelessWidget {
               ),
             ],
           ),
-          if (room.description != null && room.description!.isNotEmpty) ...[const SizedBox(height: 8), ExpandableText(room.description!, maxLines: 3, style: t.bodyMedium?.copyWith(color: c.mutedForeground))],
+          if (room.description != null && room.description!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ExpandableText(room.description!, maxLines: 3, style: t.bodyMedium?.copyWith(color: c.mutedForeground)),
+          ],
           const SizedBox(height: 12),
           Divider(color: c.border, height: 1),
           const SizedBox(height: 12),
@@ -158,9 +188,16 @@ class _RoomCard extends StatelessWidget {
           if (units > 0)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('$units ${unitNoun(room.kind, n: units)} selected for your stay', style: t.labelMedium?.copyWith(color: c.accentForeground)),
+              child: Text(
+                '$units ${unitNoun(room.kind, n: units)} selected for your stay',
+                style: t.labelMedium?.copyWith(color: c.accentForeground),
+              ),
             ),
-          if (selection.hasDates && a != null && a.eligible && room.minStayNights > 1) Padding(padding: const EdgeInsets.only(top: 4), child: Text('Min stay ${plural(room.minStayNights, 'night')}', style: t.bodySmall)),
+          if (selection.hasDates && a != null && a.eligible && room.minStayNights > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('Min stay ${plural(room.minStayNights, 'night')}', style: t.bodySmall),
+            ),
         ],
       ),
     );
@@ -184,6 +221,40 @@ class _Price extends StatelessWidget {
           TextSpan(text: ' / $per', style: t.bodySmall),
         ],
       ),
+    );
+  }
+}
+
+/// Long-term properties list monthly rent per bed or room; there is nothing to pick until tenancy requests open.
+class _LongTermRooms extends StatelessWidget {
+  const _LongTermRooms({required this.rooms});
+  final List<RoomType> rooms;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.text;
+    return Column(
+      children: [
+        for (final room in rooms)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: SurfaceCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(room.name, style: t.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    room.kind == RoomKind.dorm ? 'Shared · ${plural(room.capacity, 'bed')}' : 'Private · sleeps ${room.maxOccupancyPerUnit}',
+                    style: t.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  _Price(label: null, paise: room.fromPricePaise, per: 'month'),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

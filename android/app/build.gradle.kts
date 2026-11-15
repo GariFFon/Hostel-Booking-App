@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -28,26 +29,19 @@ android {
     }
 
     buildFeatures {
-        // The flavors set `app_name` through resValue(); AGP 8+ disables that feature unless it is switched on.
+        // app_name is set per build type through resValue(); AGP 8+ disables that feature unless it is switched on.
         resValues = true
     }
 
-    flavorDimensions += "env"
-    productFlavors {
-        create("dev") {
-            dimension = "env"
+    buildTypes {
+        debug {
+            // Debug runs install side by side with a real release build, and keep the id the Google "Android Dev" client uses.
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "Hostel Booking Dev")
         }
-        create("prod") {
-            dimension = "env"
-            resValue("string", "app_name", "Hostel Booking")
-        }
-    }
-
-    buildTypes {
         release {
+            resValue("string", "app_name", "Hostel Booking")
             // TODO(release): replace with a real upload keystore before publishing to Play.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
