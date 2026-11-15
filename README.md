@@ -1,6 +1,7 @@
 # Hostel Booking App (Flutter)
 
 > **Live website: https://hostel-booking-web.onrender.com**
+> **Download the Android app (APK): https://github.com/GariFFon/Hostel-Booking-App/releases/latest** (install it, allow "Install unknown apps" when asked)
 > API used by the app: https://hostel-booking-api-u2po.onrender.com/api/v1
 >
 > The backend runs on Render's free tier, so the first request after a quiet period can take 30 to 60 seconds. Debug builds talk to this live API by default.
